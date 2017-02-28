@@ -459,6 +459,50 @@ UNWIND(	.cantunwind)
 UNWIND(	.fnend)
 END_FUNC cpu_on_handler
 
+#elif defined(CFG_WITH_ARM32_PSCI_LIB)
+FUNC optee_warm_reset_entrypoint , :
+UNWIND(	.fnstart)
+UNWIND(	.cantunwind)
+	cps	#CPSR_MODE_SVC
+
+	/* Enable alignment checks and disable data and instruction cache. */
+	read_sctlr r0
+	orr	r0, r0, #SCTLR_A
+	bic	r0, r0, #SCTLR_C
+	bic	r0, r0, #SCTLR_I
+	write_sctlr r0
+	isb
+
+	/* Early ARM secure MP specific configuration */
+	bl	plat_cpu_reset_early
+
+	ldr	r0, =_start
+	write_vbar r0
+
+	read_sctlr r0
+	orr	r0, r0, #SCTLR_A
+	write_sctlr r0
+
+	set_sp
+
+	bl	plat_cpu_reset_late
+
+	bl	core_init_mmu_regs
+	bl	cpu_mmu_enable
+	bl	cpu_mmu_enable_icache
+
+	bl	generic_warm_boot_init
+
+	mov_imm	r0, TEESMC_OPTEED_RETURN_WARM_BOOT_DONE
+	mov	r1, #0
+	mov	r2, #0
+	mov	r3, #0
+	mov	r4, #0
+	smc	#0
+	b	.	/* SMC should not return */
+UNWIND(	.fnend)
+END_FUNC optee_warm_reset_entrypoint
+
 #else /* defined(CFG_WITH_ARM_TRUSTED_FW) */
 
 LOCAL_FUNC reset_secondary , :

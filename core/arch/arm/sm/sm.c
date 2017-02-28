@@ -34,15 +34,26 @@
 #include <string.h>
 #include "sm_private.h"
 
+#define is_psci_std_fid(_fid)	(((_fid) >= 0x84000000) && ((_fid) <= 0x8400001f))
+
+
 bool sm_from_nsec(struct sm_ctx *ctx)
 {
 	sm_save_modes_regs(&ctx->nsec.mode_regs);
 	sm_restore_modes_regs(&ctx->sec.mode_regs);
 
 	memcpy(&ctx->sec.r0, &ctx->nsec.r0, sizeof(uint32_t) * 8);
-	if (OPTEE_SMC_IS_FAST_CALL(ctx->sec.r0))
+	if (OPTEE_SMC_IS_FAST_CALL(ctx->sec.r0)) {
+		if (is_psci_std_fid(ctx->sec.r0)) {
+			invoke_psci_handler(ctx);
+			/* Return back to non secure */
+			sm_save_modes_regs(&ctx->sec.mode_regs);
+			sm_restore_modes_regs(&ctx->nsec.mode_regs);
+			return false;
+		}
+
 		ctx->sec.mon_lr = (uint32_t)&thread_vector_table.fast_smc_entry;
-	else
+	} else
 		ctx->sec.mon_lr = (uint32_t)&thread_vector_table.std_smc_entry;
 	return true;	/* return into secure state */
 }

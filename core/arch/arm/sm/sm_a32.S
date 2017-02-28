@@ -133,18 +133,29 @@ UNWIND(	.cantunwind)
 	add	r0, sp, #SM_CTX_SEC
 	bl	sm_save_modes_regs
 
+#if defined(CFG_WITH_ARM32_PSCI_LIB)
+	/* Handle warm and cold boot entry done SMCs */
+	ldr	r0, [sp, #(SM_CTX_SEC + SM_SEC_CTX_R0)]
+	/* Pass non secure context as 2nd argument */
+	add	r1, sp, #SM_CTX_NSEC
+	bl	handle_entrydone_smc
+#endif
 	/*
-	 * On FIQ exit we're restoring the non-secure context unchanged, on
-	 * all other exits we're shifting r1-r4 from secure context into
-	 * r0-r3 in non-secure context.
+	 * On FIQ exit and PSCI warm boot exit we're restoring the non-secure
+	 * context unchanged, on all other exits we're shifting r1-r4 from
+	 * secure context into r0-r3 in non-secure context.
 	 */
 	add	r8, sp, #(SM_CTX_SEC + SM_SEC_CTX_R0)
 	ldm	r8, {r0-r4}
 	mov_imm	r9, TEESMC_OPTEED_RETURN_FIQ_DONE
 	cmp	r0, r9
-	addne	r8, sp, #(SM_CTX_NSEC + SM_NSEC_CTX_R0)
-	stmne	r8, {r1-r4}
-
+	beq	.skip_sec_ctx_cpy_to_nsec
+	mov_imm	r9, TEESMC_OPTEED_RETURN_WARM_BOOT_DONE
+	cmp	r0, r9
+	beq	.skip_sec_ctx_cpy_to_nsec
+	add	r8, sp, #(SM_CTX_NSEC + SM_NSEC_CTX_R0)
+	stm	r8, {r1-r4}
+.skip_sec_ctx_cpy_to_nsec:
 	/* Restore non-secure context */
 	add	r0, sp, #SM_CTX_NSEC
 	bl	sm_restore_modes_regs
@@ -160,7 +171,6 @@ UNWIND(	.cantunwind)
 	read_scr r0
 	orr	r0, r0, #(SCR_NS | SCR_FIQ) /* Set NS and FIQ bit in SCR */
 	write_scr r0
-
 	add	sp, sp, #(SM_CTX_NSEC + SM_NSEC_CTX_R0)
 	b	.sm_exit
 

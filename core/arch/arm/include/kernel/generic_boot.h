@@ -30,12 +30,17 @@
 #include <initcall.h>
 #include <types_ext.h>
 
-#if defined(CFG_WITH_ARM_TRUSTED_FW)
+#if defined(CFG_WITH_ARM_TRUSTED_FW) || defined(CFG_WITH_ARM32_PSCI_LIB)
+# if defined(CFG_WITH_ARM32_PSCI_LIB)
+void optee_warm_reset_entrypoint(void);
+unsigned long generic_warm_boot_init(void);
+# else
 unsigned long cpu_on_handler(unsigned long a0, unsigned long a1);
+unsigned long generic_boot_cpu_on_handler(unsigned long a0, unsigned long a1);
+#endif
 struct thread_vector_table *
 generic_boot_init_primary(unsigned long pageable_part, unsigned long unused,
 			  unsigned long fdt);
-unsigned long generic_boot_cpu_on_handler(unsigned long a0, unsigned long a1);
 #else
 void generic_boot_init_primary(unsigned long pageable_part,
 			       unsigned long nsec_entry, unsigned long fdt);

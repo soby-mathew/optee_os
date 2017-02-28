@@ -116,17 +116,22 @@ void init_sec_mon(unsigned long nsec_entry __maybe_unused)
 }
 #else
 /* May be overridden in plat-$(PLATFORM)/main.c */
-__weak void init_sec_mon(unsigned long nsec_entry)
+__weak void init_sec_mon(unsigned long nsec_entry __maybe_unused)
 {
-	struct sm_nsec_ctx *nsec_ctx;
+	struct sm_nsec_ctx *nsec_ctx __maybe_unused;
 
 	assert(nsec_entry != PADDR_INVALID);
-
 	/* Initialize secure monitor */
+	/*
+	 * If integrated with PSCI library, it will take care of initializing
+	 * the Normal world context.
+	 */
+#if !defined(CFG_WITH_ARM32_PSCI_LIB)
 	nsec_ctx = sm_get_nsec_ctx();
 	nsec_ctx->mon_lr = nsec_entry;
 	nsec_ctx->mon_spsr = CPSR_MODE_SVC | CPSR_I;
 
+#endif
 }
 #endif
 
@@ -647,7 +652,7 @@ static void init_secondary_helper(unsigned long nsec_entry)
 	DMSG("Secondary CPU Switching to normal world boot\n");
 }
 
-#if defined(CFG_WITH_ARM_TRUSTED_FW)
+#if defined(CFG_WITH_ARM_TRUSTED_FW) || defined(CFG_WITH_ARM32_PSCI_LIB)
 struct thread_vector_table *
 generic_boot_init_primary(unsigned long pageable_part, unsigned long u __unused,
 			  unsigned long fdt)
@@ -655,7 +660,14 @@ generic_boot_init_primary(unsigned long pageable_part, unsigned long u __unused,
 	init_primary_helper(pageable_part, PADDR_INVALID, fdt);
 	return &thread_vector_table;
 }
-
+# if defined(CFG_WITH_ARM32_PSCI_LIB)
+unsigned long generic_warm_boot_init(void)
+{
+	DMSG("cpu %zu: warm boot", get_core_pos());
+	init_secondary_helper(PADDR_INVALID);
+	return 0;
+}
+# else
 unsigned long generic_boot_cpu_on_handler(unsigned long a0 __maybe_unused,
 				     unsigned long a1 __unused)
 {
@@ -663,6 +675,7 @@ unsigned long generic_boot_cpu_on_handler(unsigned long a0 __maybe_unused,
 	init_secondary_helper(PADDR_INVALID);
 	return 0;
 }
+# endif
 #else
 void generic_boot_init_primary(unsigned long pageable_part,
 			       unsigned long nsec_entry, unsigned long fdt)

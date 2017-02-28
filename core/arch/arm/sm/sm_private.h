@@ -34,5 +34,8 @@ bool sm_from_nsec(struct sm_ctx *ctx);
 void sm_save_modes_regs(struct sm_mode_regs *regs);
 void sm_restore_modes_regs(struct sm_mode_regs *regs);
 
+void invoke_psci_handler(struct sm_ctx *ctx);
+void handle_entrydone_smc(uint32_t smc_fid, struct sm_nsec_ctx* nctx);
+
 #endif /*SM_PRIVATE_H*/
 
