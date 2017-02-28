@@ -507,7 +507,7 @@ bool core_mmu_place_tee_ram_at_top(paddr_t paddr)
 void core_init_mmu_regs(void)
 {
 	uint32_t ttbcr = TTBCR_EAE;
-	uint32_t mair;
+	uint32_t mair, sctlr;
 	paddr_t ttbr0;
 
 	ttbr0 = virt_to_phys(l1_xlation_table[get_core_pos()]);
@@ -528,6 +528,11 @@ void core_init_mmu_regs(void)
 	write_ttbcr(ttbcr);
 	write_ttbr0_64bit(ttbr0);
 	write_ttbr1_64bit(0);
+	sctlr = read_sctlr();
+	sctlr &= ~SCTLR_WXN;
+	write_sctlr(sctlr);
+	dsb();
+	isb();
 }
 #endif /*ARM32*/
 

@@ -175,6 +175,7 @@ UNWIND(	.fnstart)
 UNWIND(	.cantunwind)
 
 	bootargs_entry
+	cps	#CPSR_MODE_SVC
 
 	/* Enable alignment checks and disable data and instruction cache. */
 	read_sctlr r0
