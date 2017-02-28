@@ -32,17 +32,29 @@
 
 /* Let platforms override this if needed */
 .weak get_core_pos
+.weak get_core_pos_by_mpidr
 
-FUNC get_core_pos , :
-UNWIND(	.fnstart)
-	read_mpidr r0
+.macro calc_core_pos
 	/* Calculate CorePos = (ClusterId * 4) + CoreId */
 	and	r1, r0, #MPIDR_CPU_MASK
 	and	r0, r0, #MPIDR_CLUSTER_MASK
 	add	r0, r1, r0, LSR #6
+.endm
+
+FUNC get_core_pos , :
+UNWIND(	.fnstart)
+	read_mpidr r0
+	calc_core_pos
 	bx	lr
 UNWIND(	.fnend)
 END_FUNC get_core_pos
+
+FUNC get_core_pos_by_mpidr , :
+UNWIND(	.fnstart)
+	calc_core_pos
+	bx	lr
+UNWIND(	.fnend)
+END_FUNC get_core_pos_by_mpidr
 
 /*
  * uint32_t temp_set_mode(int cpu_mode)
