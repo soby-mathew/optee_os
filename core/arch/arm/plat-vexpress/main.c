@@ -100,7 +100,7 @@ void main_init_gic(void)
 		panic();
 
 #if defined(PLATFORM_FLAVOR_fvp) || defined(PLATFORM_FLAVOR_juno) || \
-	defined(PLATFORM_FLAVOR_qemu_armv8a)
+	defined(PLATFORM_FLAVOR_qemu_armv8a) || defined(PLATFORM_FLAVOR_fvp_psci_arm32)
 	/* On ARMv8, GIC configuration is initialized in ARM-TF */
 	gic_init_base_addr(&gic_data, gicc_base, gicd_base);
 #else

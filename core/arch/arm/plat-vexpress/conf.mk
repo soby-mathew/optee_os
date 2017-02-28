@@ -19,6 +19,15 @@ platform-flavor-armv8 := 1
 $(call force,CFG_DT,y)
 endif
 
+ifeq ($(PLATFORM_FLAVOR),fvp_psci_arm32)
+platform-flavor-armv8-aarch32 := 1
+platform-debugger-arm := 1
+$(call force,CFG_WITH_LPAE,y)
+$(call force,CFG_WITH_ARM32_PSCI_LIB,y)
+LDADD	:= --whole-archive -L$(PSCI_LIB_PATH) -lbl32 --no-whole-archive $(LDADD)
+arm32-platform-cflags +=  -I$(PSCI_LIB_PATH) -Icore/lib/psci/include
+arm32-platform-aflags +=  -I$(PSCI_LIB_PATH)
+endif
 
 ifeq ($(platform-debugger-arm),1)
 # ARM debugger needs this

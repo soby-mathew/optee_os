@@ -32,6 +32,8 @@
 
 /* Make stacks aligned to data cache line length */
 #define STACK_ALIGNMENT		64
+/* Macro defining the Cache line length */
+#define CACHE_WB_GRANULE	64
 
 #ifdef ARM64
 #ifdef CFG_WITH_PAGER
@@ -39,7 +41,7 @@
 #endif
 #endif /*ARM64*/
 
-#if defined(PLATFORM_FLAVOR_fvp)
+#if defined(PLATFORM_FLAVOR_fvp) || defined(PLATFORM_FLAVOR_fvp_psci_arm32)
 
 #define GIC_BASE		0x2c000000
 #define UART0_BASE		0x1c090000
@@ -103,7 +105,7 @@
 #error "Unknown platform flavor"
 #endif
 
-#if defined(PLATFORM_FLAVOR_fvp)
+#if defined(PLATFORM_FLAVOR_fvp) || defined(PLATFORM_FLAVOR_fvp_psci_arm32)
 /*
  * FVP specifics.
  */
@@ -294,5 +296,18 @@
 #ifndef CONSOLE_UART_CLK_IN_HZ
 #define CONSOLE_UART_CLK_IN_HZ	1
 #endif
+
+#define DEVICE0_PA_BASE		ROUNDDOWN(0x20000000, \
+					  CORE_MMU_DEVICE_SIZE)
+#define DEVICE0_VA_BASE		DEVICE0_PA_BASE
+#define DEVICE0_SIZE		0x0c200000
+#define DEVICE0_TYPE		MEM_AREA_IO_SEC
+
+#define DEVICE1_PA_BASE		ROUNDDOWN(0x04000000, \
+					  CORE_MMU_DEVICE_SIZE)
+#define DEVICE1_VA_BASE		DEVICE1_PA_BASE
+#define DEVICE1_SIZE		0x00001000
+#define DEVICE1_TYPE		MEM_AREA_IO_SEC
+
 
 #endif /*PLATFORM_CONFIG_H*/
