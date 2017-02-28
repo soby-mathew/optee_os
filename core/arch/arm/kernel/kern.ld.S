@@ -88,6 +88,15 @@ SECTIONS
 	.rodata : ALIGN(8) {
 		__rodata_start = .;
 		*(.gnu.linkonce.r.*)
+		/*
+		 * Ensure 8-byte alignment for cpu_ops so that its fields are also
+		 * aligned. Also ensure cpu_ops inclusion.
+		 */
+		. = ALIGN(8);
+		__CPU_OPS_START__ = .;
+		KEEP(*(cpu_ops))
+		__CPU_OPS_END__ = .;
+
 #ifdef CFG_WITH_PAGER
 		*(.rodata .rodata.__unpaged)
 #include <rodata_unpaged.ld.S>
@@ -108,8 +117,6 @@ SECTIONS
 		KEEP(*(phys_mem_map_section))
 		__end_phys_mem_map_section = . ;
 #endif
-		. = ALIGN(8);
-		__rodata_end = .;
 	}
 
 	.interp : { *(.interp) }
@@ -181,12 +188,48 @@ SECTIONS
 
 	__data_end = .;
 	/* unintialized data */
-	.bss : ALIGN(8) {
+	.bss (NOLOAD): ALIGN(8) {
 		__bss_start = .;
 		*(.bss .bss.*)
 		*(.gnu.linkonce.b.*)
 		*(COMMON)
-		. = ALIGN(8);
+#if defined(CFG_WITH_ARM32_PSCI_LIB)
+		/*
+	         * Bakery locks are stored in normal .bss memory if PSCI library
+	         * is configured not to use coherent RAM.
+	         *
+	         * Each lock's data is spread across multiple cache lines,
+	         * one per CPU, but multiple locks can share the same cache
+	         * line. The compiler will allocate enough memory for one CPU's
+	         * bakery locks, the remaining cache lines are allocated by the
+	         * linker script. The linker symbols generated are referenced
+	         * by the PSCI library code
+	         */
+	        . = ALIGN(CACHE_WB_GRANULE);
+	        __BAKERY_LOCK_START__ = .;
+	        *(bakery_lock)
+	        . = ALIGN(CACHE_WB_GRANULE);
+	        __PERCPU_BAKERY_LOCK_SIZE__ = ABSOLUTE(. - __BAKERY_LOCK_START__);
+	        . = . + (__PERCPU_BAKERY_LOCK_SIZE__ * (CFG_TEE_CORE_NB_CORE - 1));
+	        __BAKERY_LOCK_END__ = .;
+
+		/*
+		 * Time-stamps are stored in normal .bss memory
+		 *
+		 * The compiler will allocate enough memory for one CPU's time-stamps,
+		 * the remaining memory for other CPU's is allocated by the
+		 * linker script
+		 */
+		. = ALIGN(CACHE_WB_GRANULE);
+		__PMF_TIMESTAMP_START__ = .;
+		KEEP(*(pmf_timestamp_array))
+		. = ALIGN(CACHE_WB_GRANULE);
+		__PMF_PERCPU_TIMESTAMP_END__ = .;
+		__PERCPU_TIMESTAMP_SIZE__ = ABSOLUTE(. - __PMF_TIMESTAMP_START__);
+		. = . + (__PERCPU_TIMESTAMP_SIZE__ * (CFG_TEE_CORE_NB_CORE - 1));
+		__PMF_TIMESTAMP_END__ = .;
+#endif
+	        . = ALIGN(8);
 		__bss_end = .;
 	}
 

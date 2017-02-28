@@ -110,6 +110,10 @@ typedef uint64_t uint_fast64_t;
 typedef long intptr_t;
 typedef unsigned long uintptr_t;
 
+/* Integer types having register width */
+typedef long register_t;
+typedef unsigned long u_register_t;
+
 typedef int64_t intmax_t;
 typedef uint64_t uintmax_t;
 
