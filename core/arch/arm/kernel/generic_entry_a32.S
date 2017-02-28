@@ -365,12 +365,18 @@ shadow_stack_access_ok:
 	bl	core_init_mmu_regs
 	bl	cpu_mmu_enable
 	bl	cpu_mmu_enable_icache
+#if !defined(CFG_WITH_ARM32_PSCI_LIB)
 	bl	cpu_mmu_enable_dcache
+#endif
 
 	mov	r0, r4		/* pageable part address */
 	mov	r1, r5		/* ns-entry address */
 	mov	r2, r6		/* DT address */
 	bl	generic_boot_init_primary
+#if defined(CFG_WITH_ARM32_PSCI_LIB)
+	bl	optee_early_platform_setup
+	bl	cpu_mmu_enable_dcache
+#endif
 	mov	r4, r0		/* save entry test vector */
 
 	/*
