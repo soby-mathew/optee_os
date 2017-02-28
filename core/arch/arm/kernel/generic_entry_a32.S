@@ -190,7 +190,7 @@ UNWIND(	.cantunwind)
 	ldr	r0, =_start
 	write_vbar r0
 
-#if defined(CFG_WITH_ARM_TRUSTED_FW)
+#if defined(CFG_WITH_ARM_TRUSTED_FW) || defined(CFG_WITH_ARM32_PSCI_LIB)
 	b	reset_primary
 #else
 	bl	get_core_pos

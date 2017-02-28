@@ -40,6 +40,7 @@
 #define CPSR_MODE_SVC	ARM32_CPSR_MODE_SVC
 #define CPSR_MODE_MON	ARM32_CPSR_MODE_MON
 #define CPSR_MODE_ABT	ARM32_CPSR_MODE_ABT
+#define CPSR_MODE_HYP	ARM32_CPSR_MODE_HYP
 #define CPSR_MODE_UND	ARM32_CPSR_MODE_UND
 #define CPSR_MODE_SYS	ARM32_CPSR_MODE_SYS
 
@@ -349,6 +350,17 @@ static inline uint32_t read_ifsr(void)
 	);
 
 	return ifsr;
+}
+
+static inline uint32_t read_scr(void)
+{
+	uint32_t scr;
+
+	asm volatile ("mrc	p15, 0, %[scr], c1, c1, 0"
+			: [scr] "=r" (scr)
+	);
+
+	return scr;
 }
 
 static inline void write_scr(uint32_t scr)

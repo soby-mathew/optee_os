@@ -12,6 +12,14 @@ CFG_KERN_LINKER_FORMAT ?= elf32-littlearm
 CFG_KERN_LINKER_ARCH ?= arm
 endif
 
+# Integrate the OP-TEE secure monitor with PSCI library from ARM Trusted
+# Firmware. This is only supported for ARM32 cores.
+ifeq ($(CFG_WITH_ARM32_PSCI_LIB),y)
+ifeq ($(CFG_ARM64_core),y)
+$(error Error: CFG_WITH_ARM32_PSCI_LIB cannot be set when CFG_ARM64_core=y)
+endif
+endif
+
 ifeq ($(CFG_TA_FLOAT_SUPPORT),y)
 # Use hard-float for floating point support in user TAs instead of
 # soft-float

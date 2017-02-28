@@ -38,6 +38,10 @@
 	mcr	p15, 0, \reg, c1, c0, 0
 	.endm
 
+	.macro write_hsctlr reg
+	mcr	p15, 4, \reg, c1, c0, 0
+	.endm
+
 	.macro write_actlr reg
 	mcr	p15, 0, \reg, c1, c0, 1
 	.endm
