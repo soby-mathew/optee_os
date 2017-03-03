@@ -28,6 +28,7 @@
 #include <asm.S>
 #include <arm.h>
 #include <arm32_macros.S>
+#include <keep.h>
 #include <kernel/unwind.h>
 
 /* Let platforms override this if needed */
@@ -100,3 +101,15 @@ UNWIND(	.save	{r4, lr})
 	pop	{r4, pc}
 UNWIND(	.fnend)
 END_FUNC read_mode_lr
+
+/* May be overridden in platform */
+FUNC plat_cpu_reset_early , :
+UNWIND(	.fnstart)
+#if defined(CFG_WITH_ARM32_PSCI_LIB)
+	b	reset_handler
+#else
+	bx	lr
+#endif
+UNWIND(	.fnend)
+END_FUNC plat_cpu_reset_early
+KEEP_PAGER plat_cpu_reset_early
